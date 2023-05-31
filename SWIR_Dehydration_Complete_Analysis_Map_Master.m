@@ -16,7 +16,7 @@ for i = 1:num_images
     filename = fullfile(image_folder, image_files(i).name);
     image_data{i} = load(filename);
 end
-%%%%%%
+
 %% 
 % Calculate Delta I for every Pixel
 % Identify second and last frame
