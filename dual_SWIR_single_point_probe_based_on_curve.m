@@ -3,14 +3,17 @@
 % Instructions:
     % Change the working directory to the folder containing "xlsx" file
     % copy file name into line 11
-    % Optional: Set number of frames in this dehydration run
-    % The default setting is at 120 frames with 60 seconds
+    % Optional: Set number of frames and FPS in this dehydration run
+    % The default setting is at 120 frames with 60 seconds at 2 FPS
+% Author: Yihua Zhu
   
 
 %Import data
 table = readtable('M24_5psi_run3.xlsx');
 %Set number of frames
 num_images = 120;
+%Set FPS
+FPS = 2;
 %Remove the first frame
 table(1,:) = [];
 %Separate table into two wavelength
@@ -20,12 +23,12 @@ table_1300 = table(:,2);
 %% Fit 1950nm to Hill Function
 
 %Prepare Hill function fitting parameters
-x1 = transpose(1:(num_images-1))/2;
+x1 = transpose(1:(num_images-1))/FPS;
 y1 = table2array(table_1950);
 maximum = max(y1);
 dY_1 = diff(y1)./diff(x1);
 slope = max(dY_1);
-halfActiv = num_images/4;
+halfActiv = num_images/(2*FPS);
 intercept = y1(1);
 
    % Initiate Hill Function fit
@@ -41,26 +44,52 @@ z1 = lsqcurvefit(F1,z0,x1,y1);
         HillOutput_1 = [{[x1,F1(z1,x1)]},{[z1(1),z1(3),z1(4),z1(2)]}];
 % Get Hill function fitted growth rate
 growth_rate_1 = HillOutput_1{1,2}(2);
+% Get new arrays of x,y in the fitted Hill Function
+y1_hill = HillOutput_1{1,1}(:,2);
+% Y-axis of First derivative of fitted Hill Function
+dy1_hill = diff(y1_hill)./diff(x1);
 
 %% Find %Ifin for 1950nm
-[M, tMax] = max(dY_1);
-I_tMax = y1(tMax);
-I_t0 = y1(1);
-I_tend = y1(num_images-1);
-I_tMaxPlus10 = y1(tMax + 10);
+
+[M, tMax] = max(dy1_hill);
+I_tMax = y1_hill(tMax);
+I_t0 = y1_hill(1);
+I_tend = y1_hill(num_images-1);
+I_tMaxPlus10 = y1_hill(tMax + 10*FPS);
 
 percent_Ifin_1 = ((I_tend - I_tMaxPlus10)/(I_tend - I_t0))*100;
 
 %% Find Delta_I for 1950nm
 %calculate delta I
-Imax_1 = max(y1);
-Imin_1 = min(y1);
+Imax_1 = max(y1_hill);
+Imin_1 = min(y1_hill);
 delta_I_1 = Imax_1 - Imin_1;
 delta_I_percent_1 = (delta_I_1/Imin_1)*100;
 
 %% Identify Delay (first frame when derivative is larger than 0.1) for 1950nm
-delay_1 = find(dY_1 > 0.1) - 1;
-Delay_display_1 = delay_1(1);
+
+%Generate the "horizontal line" at the beginning of the data
+y1_hill_beginning = dy1_hill(1:2,:);
+x1_beginning = x1(1:2,:);
+[xData, yData] = prepareCurveData( x1_beginning, y1_hill_beginning );
+ft = fittype( 'a*x+b', 'independent', 'x', 'dependent', 'y' );
+opts = fitoptions( 'Method', 'NonlinearLeastSquares' );
+opts.Display = 'Off';
+opts.StartPoint = [0 0];
+[fitresult1, gof1] = fit( xData, yData, ft, opts );
+
+%Generate the "tangent line" at maximum slope
+b_tangent_1 = I_tMax - M*tMax/FPS;
+
+%Find intercept of two lines
+y_horizontal_1 = @(x) fitresult1.a*x + fitresult1.b;
+y_vertical_1 = @(x) M*FPS*x + b_tangent_1;
+intersection_1 = fzero(@(x) y_horizontal_1(x)-y_vertical_1(x), 1);
+
+if intersection_1 <= 1,
+    Delay_display_1 = 0
+else Delay_display_1 = intersection_1
+end
 
 %% Fit 1300nm to Hill Function
 
@@ -70,7 +99,7 @@ y2 = table2array(table_1300);
 maximum = max(y2);
 dY_2 = diff(y2)./diff(x2);
 slope = max(dY_2);
-halfActiv = num_images/4;
+halfActiv = num_images/(2*FPS);
 intercept = y2(1);
 
    % Initiate Hill Function fit
@@ -86,24 +115,49 @@ z2 = lsqcurvefit(F2,z0,x2,y2);
         HillOutput_2 = [{[x2,F2(z2,x2)]},{[z2(1),z2(3),z2(4),z2(2)]}];
 % Get Hill function fitted growth rate
 growth_rate_2 = HillOutput_2{1,2}(2);
+% Get new arrays of x,y in the fitted Hill Function
+y2_hill = HillOutput_2{1,1}(:,2);
+% Y-axis of First derivative of fitted Hill Function
+dy2_hill = diff(y2_hill)./diff(x2);
 
 %% Find %Ifin for 1300nm
-[M, tMax] = max(dY_2);
-I_tMax = y2(tMax);
-I_t0 = y2(1);
-I_tend = y2(num_images-1);
-I_tMaxPlus10 = y2(tMax + 10);
+[M, tMax] = max(dy2_hill);
+I_tMax = y2_hill(tMax);
+I_t0 = y2_hill(1);
+I_tend = y2_hill(num_images-1);
+I_tMaxPlus10 = y2_hill(tMax + 10*FPS);
 
 percent_Ifin_2 = ((I_tend - I_tMaxPlus10)/(I_tend - I_t0))*100;
 
-%% Identify Delay (first frame when derivative is larger than 0.01) for 1300nm
-delay_2 = find(dY_2 > 0.01) - 1;
-Delay_display_2 = delay_2(1);
+%% Identify Delay for 1300nm
+
+%Generate the "horizontal line" at the beginning of the data
+y2_hill_beginning = dy2_hill(1:2,:);
+x2_beginning = x2(1:2,:);
+[xData, yData] = prepareCurveData( x2_beginning, y2_hill_beginning );
+ft = fittype( 'a*x+b', 'independent', 'x', 'dependent', 'y' );
+opts = fitoptions( 'Method', 'NonlinearLeastSquares' );
+opts.Display = 'Off';
+opts.StartPoint = [0 0];
+[fitresult2, gof1] = fit( xData, yData, ft, opts );
+
+%Generate the "tangent line" at maximum slope
+b_tangent_2 = I_tMax - M*tMax/FPS;
+
+%Find intercept of two lines
+y_horizontal_2 = @(x) fitresult2.a*x + fitresult2.b;
+y_vertical_2 = @(x) M*FPS*x + b_tangent_2;
+intersection_2 = fzero(@(x) y_horizontal_2(x)-y_vertical_2(x), 1);
+
+if intersection_2 <= 1,
+    Delay_display_2 = 0,
+else Delay_display_2 = intersection_2
+end
 
 %% Find Delta_I for 1300nm
 %calculate delta I
-Imax_2 = max(y2);
-Imin_2 = min(y2);
+Imax_2 = max(y2_hill);
+Imin_2 = min(y2_hill);
 delta_I_2 = Imax_2 - Imin_2;
 delta_I_percent_2 = (delta_I_2/Imin_2)*100;
 %% Display figures
