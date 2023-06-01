@@ -12,3 +12,4 @@ To stabilize clinical dehydration frames manually, use "Dehydration_Manual_Stabi
 
 To convert dehydration frames into ".avi" video, use "Dehydration_Dat2Video.m"
 
+To analyze dual wavelength dehydration data, use "dual_SWIR_single_point_probe.m"
