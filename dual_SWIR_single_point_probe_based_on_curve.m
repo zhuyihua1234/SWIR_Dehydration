@@ -9,7 +9,7 @@
   
 
 %Import data
-table = readtable('M24_5psi_run3.xlsx');
+table = readtable('N23_5psi_run1.xlsx');
 %Set number of frames
 num_images = 120;
 %Set FPS
@@ -49,7 +49,7 @@ y1_hill = HillOutput_1{1,1}(:,2);
 % Y-axis of First derivative of fitted Hill Function
 dy1_hill = diff(y1_hill)./diff(x1);
 
-%% Find %Ifin for 1950nm
+%% Find %Ifin for 1950nm (based on fitted curve)
 
 [M, tMax] = max(dy1_hill);
 I_tMax = y1_hill(tMax);
@@ -57,7 +57,16 @@ I_t0 = y1_hill(1);
 I_tend = y1_hill(num_images-1);
 I_tMaxPlus10 = y1_hill(tMax + 10*FPS);
 
-percent_Ifin_1 = ((I_tend - I_tMaxPlus10)/(I_tend - I_t0))*100;
+percent_Ifin_1_curve = ((I_tend - I_tMaxPlus10)/(I_tend - I_t0))*100;
+
+%% Find %Ifin for 1950nm (based on data)
+[M_data, tMax_data] = max(dY_1);
+I_tMax_data = y1(tMax_data);
+I_t0_data = y1(1);
+I_tend_data = y1(num_images-1);
+I_tMaxPlus10_data = y1(tMax_data + 10*FPS);
+
+percent_Ifin_1_data = ((I_tend_data - I_tMaxPlus10_data)/(I_tend_data - I_t0_data))*100;
 
 %% Find Delta_I for 1950nm
 %calculate delta I
@@ -69,24 +78,19 @@ delta_I_percent_1 = (delta_I_1/Imin_1)*100;
 %% Identify Delay (first frame when derivative is larger than 0.1) for 1950nm
 
 %Generate the "horizontal line" at the beginning of the data
-y1_hill_beginning = dy1_hill(1:2,:);
+y1_hill_beginning = y1_hill(1:2,:);
 x1_beginning = x1(1:2,:);
-[xData, yData] = prepareCurveData( x1_beginning, y1_hill_beginning );
-ft = fittype( 'a*x+b', 'independent', 'x', 'dependent', 'y' );
-opts = fitoptions( 'Method', 'NonlinearLeastSquares' );
-opts.Display = 'Off';
-opts.StartPoint = [0 0];
-[fitresult1, gof1] = fit( xData, yData, ft, opts );
+fitresult1 = polyfit(x1_beginning, y1_hill_beginning,1);
 
 %Generate the "tangent line" at maximum slope
 b_tangent_1 = I_tMax - M*tMax/FPS;
 
 %Find intercept of two lines
-y_horizontal_1 = @(x) fitresult1.a*x + fitresult1.b;
-y_vertical_1 = @(x) M*FPS*x + b_tangent_1;
+y_horizontal_1 = @(x) fitresult1(1)*x + fitresult1(2);
+y_vertical_1 = @(x) M*x + b_tangent_1;
 intersection_1 = fzero(@(x) y_horizontal_1(x)-y_vertical_1(x), 1);
 
-if intersection_1 <= 1,
+if intersection_1 <= 0.5,
     Delay_display_1 = 0
 else Delay_display_1 = intersection_1
 end
@@ -120,36 +124,40 @@ y2_hill = HillOutput_2{1,1}(:,2);
 % Y-axis of First derivative of fitted Hill Function
 dy2_hill = diff(y2_hill)./diff(x2);
 
-%% Find %Ifin for 1300nm
+%% Find %Ifin for 1300nm (based on fitted curve)
 [M, tMax] = max(dy2_hill);
 I_tMax = y2_hill(tMax);
 I_t0 = y2_hill(1);
 I_tend = y2_hill(num_images-1);
 I_tMaxPlus10 = y2_hill(tMax + 10*FPS);
 
-percent_Ifin_2 = ((I_tend - I_tMaxPlus10)/(I_tend - I_t0))*100;
+percent_Ifin_2_curve = ((I_tend - I_tMaxPlus10)/(I_tend - I_t0))*100;
+
+%% Find %Ifin for 1300nm (based on data)
+[M_data, tMax_data] = max(dY_2);
+I_tMax_data = y2(tMax_data);
+I_t0_data = y2(1);
+I_tend_data = y2(num_images-1);
+I_tMaxPlus10_data = y2(tMax_data + 10*FPS);
+
+percent_Ifin_2_data = ((I_tend_data - I_tMaxPlus10_data)/(I_tend_data - I_t0_data))*100;
 
 %% Identify Delay for 1300nm
 
 %Generate the "horizontal line" at the beginning of the data
-y2_hill_beginning = dy2_hill(1:2,:);
+y2_hill_beginning = y2_hill(1:2,:);
 x2_beginning = x2(1:2,:);
-[xData, yData] = prepareCurveData( x2_beginning, y2_hill_beginning );
-ft = fittype( 'a*x+b', 'independent', 'x', 'dependent', 'y' );
-opts = fitoptions( 'Method', 'NonlinearLeastSquares' );
-opts.Display = 'Off';
-opts.StartPoint = [0 0];
-[fitresult2, gof1] = fit( xData, yData, ft, opts );
+fitresult2 = polyfit(x2_beginning, y2_hill_beginning,1);
 
 %Generate the "tangent line" at maximum slope
 b_tangent_2 = I_tMax - M*tMax/FPS;
 
 %Find intercept of two lines
-y_horizontal_2 = @(x) fitresult2.a*x + fitresult2.b;
-y_vertical_2 = @(x) M*FPS*x + b_tangent_2;
+y_horizontal_2 = @(x) fitresult2(1)*x + fitresult2(2);
+y_vertical_2 = @(x) M*x + b_tangent_2;
 intersection_2 = fzero(@(x) y_horizontal_2(x)-y_vertical_2(x), 1);
 
-if intersection_2 <= 1,
+if intersection_2 <= 0.5,
     Delay_display_2 = 0,
 else Delay_display_2 = intersection_2
 end
@@ -183,13 +191,15 @@ delta_I_percent_2 = (delta_I_2/Imin_2)*100;
 
 %% Display other dehydration parameters
 fprintf('1950nm Rate = %0.2f \n', growth_rate_1)
-fprintf('1950nm Percent_Ifin = %0.2f \n', percent_Ifin_1)
+fprintf('1950nm Percent_Ifin based on fitted curve = %0.2f \n', percent_Ifin_1_curve)
+fprintf('1950nm Percent_Ifin based on data = %0.2f \n', percent_Ifin_1_data)
 fprintf('1950nm Delay = %0.2f \n', Delay_display_1)
 fprintf('1950nm deltaI = %0.2f \n', delta_I_1)
 fprintf('1950nm deltaI_percent = %0.2f \n', delta_I_percent_1)
 
 fprintf('1300nm Rate = %0.2f \n', growth_rate_2)
-fprintf('1300nm Percent_Ifin = %0.2f \n', percent_Ifin_2)
+fprintf('1300nm Percent_Ifin based on fitted curve = %0.2f \n', percent_Ifin_2_curve)
+fprintf('1950nm Percent_Ifin based on data = %0.2f \n', percent_Ifin_2_data)
 fprintf('1300nm Delay = %0.2f \n', Delay_display_2)
 fprintf('1300nm deltaI = %0.2f \n', delta_I_2)
 fprintf('1300nm deltaI_percent = %0.2f \n', delta_I_percent_2)
