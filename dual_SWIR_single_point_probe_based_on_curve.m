@@ -9,7 +9,7 @@
   
 
 %Import data
-table = readtable('N23_5psi_run1.xlsx');
+table = readtable('B10_5psi_run1.xlsx');
 %Set number of frames
 num_images = 120;
 %Set FPS
@@ -90,7 +90,7 @@ y_horizontal_1 = @(x) fitresult1(1)*x + fitresult1(2);
 y_vertical_1 = @(x) M*x + b_tangent_1;
 intersection_1 = fzero(@(x) y_horizontal_1(x)-y_vertical_1(x), 1);
 
-if intersection_1 <= 0.5,
+if abs(fitresult1(1) - M) < 0.000000001
     Delay_display_1 = 0
 else Delay_display_1 = intersection_1
 end
@@ -157,8 +157,8 @@ y_horizontal_2 = @(x) fitresult2(1)*x + fitresult2(2);
 y_vertical_2 = @(x) M*x + b_tangent_2;
 intersection_2 = fzero(@(x) y_horizontal_2(x)-y_vertical_2(x), 1);
 
-if intersection_2 <= 0.5,
-    Delay_display_2 = 0,
+if abs(fitresult2(1) - M) < 0.000000001
+    Delay_display_2 = 0
 else Delay_display_2 = intersection_2
 end
 
@@ -174,6 +174,10 @@ delta_I_percent_2 = (delta_I_2/Imin_2)*100;
     scatter(x1,y1,'k');
     hold on
     plot(x1,F1(z1,x1),'Linewidth',2,'Color','m');
+    fplot(y_vertical_1,'b');
+    fplot(y_horizontal_1,'r');
+    xlim([0 60]);
+    ylim([Imin_1 Imax_1]);
     title('1950nm');
     xlabel('Time (s)');
     ylabel('Intensity(a.u.)');
@@ -183,6 +187,10 @@ delta_I_percent_2 = (delta_I_2/Imin_2)*100;
     scatter(x2,y2,'k');
     hold on
     plot(x2,F2(z2,x2),'Linewidth',2,'Color','m');
+    fplot(y_vertical_2,'b');
+    fplot(y_horizontal_2,'r');
+    xlim([0 60]);
+    ylim([Imin_2 Imax_2]);
     title('1300nm');
     xlabel('Time (s)');
     ylabel('Intensity(a.u.)');
@@ -199,7 +207,7 @@ fprintf('1950nm deltaI_percent = %0.2f \n', delta_I_percent_1)
 
 fprintf('1300nm Rate = %0.2f \n', growth_rate_2)
 fprintf('1300nm Percent_Ifin based on fitted curve = %0.2f \n', percent_Ifin_2_curve)
-fprintf('1950nm Percent_Ifin based on data = %0.2f \n', percent_Ifin_2_data)
+fprintf('1300nm Percent_Ifin based on data = %0.2f \n', percent_Ifin_2_data)
 fprintf('1300nm Delay = %0.2f \n', Delay_display_2)
 fprintf('1300nm deltaI = %0.2f \n', delta_I_2)
 fprintf('1300nm deltaI_percent = %0.2f \n', delta_I_percent_2)
