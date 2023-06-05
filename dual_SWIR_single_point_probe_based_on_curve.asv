@@ -9,7 +9,7 @@
   
 
 %Import data
-table = readtable('M24_5psi_run3.xlsx');
+table = readtable('M19_5psi_run1.xlsx');
 %Set number of frames
 num_images = 120;
 %Set FPS
@@ -55,10 +55,11 @@ dy1_hill = diff(y1_hill)./diff(x1);
 I_tMax = y1_hill(tMax);
 I_t0 = y1_hill(1);
 I_tend = y1_hill(num_images-1);
+I_tMaxPlus10 = y1_hill(tMax + 10*FPS);
 
 if tMax + 10*FPS < (num_images - 1)
-    I_tMaxPlus10 = y1_hill(tMax + 10*FPS)
-else I_tMaxPlus10 = I_tend
+    I_tMaxPlus10 = y1(tMax_data + 10*FPS)
+else I_tMaxPlus10_data = I_tend_data
 end
 
 percent_Ifin_1_curve = ((I_tend - I_tMaxPlus10)/(I_tend - I_t0))*100;
@@ -137,11 +138,7 @@ dy2_hill = diff(y2_hill)./diff(x2);
 I_tMax = y2_hill(tMax);
 I_t0 = y2_hill(1);
 I_tend = y2_hill(num_images-1);
-
-if tMax + 10*FPS < (num_images - 1)
-    I_tMaxPlus10 = y2_hill(tMax + 10*FPS)
-else I_tMaxPlus10 = I_tend
-end
+I_tMaxPlus10 = y2_hill(tMax + 10*FPS);
 
 percent_Ifin_2_curve = ((I_tend - I_tMaxPlus10)/(I_tend - I_t0))*100;
 
