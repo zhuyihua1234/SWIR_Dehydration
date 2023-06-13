@@ -9,13 +9,13 @@
   
 
 %Import data
-table = readtable('M24_5psi_run3.xlsx');
+table = readtable('M24_2.5psi_run3.xlsx');
 %Set number of frames
 num_images = 120;
 %Set FPS
 FPS = 2;
 %Remove the first frame
-table(1,:) = [];
+%table(1,:) = [];
 %Separate table into two wavelength
 table_1950 = table(:,1);
 table_1300 = table(:,2);
@@ -23,12 +23,12 @@ table_1300 = table(:,2);
 %% Fit 1950nm to Hill Function
 
 %Prepare Hill function fitting parameters
-x1 = transpose(1:(num_images-1))/FPS;
+x1 = transpose(1:(num_images))/FPS;
 y1 = table2array(table_1950);
 maximum = max(y1);
 dY_1 = diff(y1)./diff(x1);
 slope = max(dY_1);
-halfActiv = num_images/(2*FPS);
+halfActiv = (find(dY_1 == slope))/FPS;
 intercept = y1(1);
 
    % Initiate Hill Function fit
@@ -38,7 +38,7 @@ intercept = y1(1);
         z0 = [intercept,maximum,slope,halfActiv];
 
 % finds the Hill function based on least squares fitting
-z1 = lsqcurvefit(F1,z0,x1,y1); 
+z1 = real(lsqcurvefit(F1,z0,x1,y1)); 
 
 % Hill Function Growth rate Output 
         HillOutput_1 = [{[x1,F1(z1,x1)]},{[z1(1),z1(3),z1(4),z1(2)]}];
@@ -54,9 +54,9 @@ dy1_hill = diff(y1_hill)./diff(x1);
 [M, tMax] = max(dy1_hill);
 I_tMax = y1_hill(tMax);
 I_t0 = y1_hill(1);
-I_tend = y1_hill(num_images-1);
+I_tend = y1_hill(num_images);
 
-if tMax + 10*FPS < (num_images - 1)
+if tMax + 10*FPS < (num_images)
     I_tMaxPlus10 = y1_hill(tMax + 10*FPS)
 else I_tMaxPlus10 = I_tend
 end
@@ -67,9 +67,9 @@ percent_Ifin_1_curve = ((I_tend - I_tMaxPlus10)/(I_tend - I_t0))*100;
 [M_data, tMax_data] = max(dY_1);
 I_tMax_data = y1(tMax_data);
 I_t0_data = y1(1);
-I_tend_data = y1(num_images-1);
+I_tend_data = y1(num_images);
 
-if tMax_data + 10*FPS < (num_images - 1)
+if tMax_data + 10*FPS < (num_images)
     I_tMaxPlus10_data = y1(tMax_data + 10*FPS)
 else I_tMaxPlus10_data = I_tend_data
 end
@@ -106,12 +106,12 @@ end
 %% Fit 1300nm to Hill Function
 
 %Prepare Hill function fitting parameters
-x2 = transpose(1:(num_images-1))/2;
+x2 = transpose(1:(num_images))/2;
 y2 = table2array(table_1300);
 maximum = max(y2);
 dY_2 = diff(y2)./diff(x2);
 slope = max(dY_2);
-halfActiv = num_images/(2*FPS);
+halfActiv = (find(dY_2 == slope))/FPS;
 intercept = y2(1);
 
    % Initiate Hill Function fit
@@ -121,7 +121,7 @@ intercept = y2(1);
         z0 = [intercept,maximum,slope,halfActiv];
 
 % finds the Hill function based on least squares fitting
-z2 = lsqcurvefit(F2,z0,x2,y2); 
+z2 = real(lsqcurvefit(F2,z0,x2,y2)); 
 
 % Hill Function Growth rate Output 
         HillOutput_2 = [{[x2,F2(z2,x2)]},{[z2(1),z2(3),z2(4),z2(2)]}];
@@ -136,9 +136,9 @@ dy2_hill = diff(y2_hill)./diff(x2);
 [M, tMax] = max(dy2_hill);
 I_tMax = y2_hill(tMax);
 I_t0 = y2_hill(1);
-I_tend = y2_hill(num_images-1);
+I_tend = y2_hill(num_images);
 
-if tMax + 10*FPS < (num_images - 1)
+if tMax + 10*FPS < (num_images)
     I_tMaxPlus10 = y2_hill(tMax + 10*FPS)
 else I_tMaxPlus10 = I_tend
 end
@@ -149,9 +149,9 @@ percent_Ifin_2_curve = ((I_tend - I_tMaxPlus10)/(I_tend - I_t0))*100;
 [M_data, tMax_data] = max(dY_2);
 I_tMax_data = y2(tMax_data);
 I_t0_data = y2(1);
-I_tend_data = y2(num_images-1);
+I_tend_data = y2(num_images);
 
-if tMax_data + 10*FPS < (num_images - 1)
+if tMax_data + 10*FPS < (num_images)
     I_tMaxPlus10_data = y2(tMax_data + 10*FPS)
 else I_tMaxPlus10_data = I_tend_data
 end
