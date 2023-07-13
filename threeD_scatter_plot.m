@@ -1,14 +1,26 @@
 % Plot 3D scatter graph for dehydration parameters
-% Change the name after "readtable" to the name of your Excelsheet
-% Click Run
 % Author: Yihua Zhu
 
-tbl = readtable('3Dplot_test.xlsx');
-S = 100
-scatter3(tbl.x1950Rate, tbl.x1950Fit_Ifin, tbl.x1950Delay, S,'filled',"red")
+% Read Excel file
+file = uigetfile('*.xlsx');
+file_for_save = erase(file,".xlsx");
+tbl = readtable(file);
+
+%%
+% Generate 3D plot
+S = 100;
+scatter3(tbl.Deriv_AtFirstPointOfExp_Fit, tbl.IntersectionRelativeTo0_8Point, tbl.AreaBetweenTNCurvesFrom0_8PointToIntersectionPoint, S,'filled',"red")
 hold on
-scatter3(tbl.x1950Rate_1, tbl.x1950Fit_Ifin_1, tbl.x1950Delay_1, S,'filled',"blue")
+scatter3(tbl.Deriv_AtFirstPointOfExp_Fit_1, tbl.IntersectionRelativeTo0_8Point_1, tbl.AreaBetweenTNCurvesFrom0_8PointToIntersectionPoint_1, S,'filled',"blue")
 hold off
 grid on
 legend('active', 'arrested')
+xlabel('Deriv. at Start of Fit')
+ylabel('Intersection Time')
+zlabel('Area Between Curves')
+savefig(file_for_save)
 
+%%
+
+%Save workspace
+save(file_for_save)
